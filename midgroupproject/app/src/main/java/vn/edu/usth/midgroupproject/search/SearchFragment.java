@@ -35,6 +35,10 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import vn.edu.usth.midgroupproject.R;
+import vn.edu.usth.midgroupproject.search.search_fragments.ChristianSongsPageFragment;
+import vn.edu.usth.midgroupproject.search.search_fragments.IndieSongsPageFragment;
+import vn.edu.usth.midgroupproject.search.search_fragments.PopSongsPageFragment;
+import vn.edu.usth.midgroupproject.search.search_fragments.RockSongsPageFragment;
 
 public class SearchFragment extends Fragment {
 
