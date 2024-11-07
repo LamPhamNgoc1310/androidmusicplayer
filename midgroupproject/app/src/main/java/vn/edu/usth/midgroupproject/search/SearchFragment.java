@@ -2,14 +2,10 @@ package vn.edu.usth.midgroupproject.search;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -20,7 +16,6 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.appcompat.widget.SearchView;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -40,10 +35,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import vn.edu.usth.midgroupproject.R;
-import vn.edu.usth.midgroupproject.liked.ChristianSongsPageFragment;
-import vn.edu.usth.midgroupproject.liked.IndieSongsPageFragment;
-import vn.edu.usth.midgroupproject.liked.PopSongsPageFragment;
-import vn.edu.usth.midgroupproject.liked.RockSongsPageFragment;
 
 public class SearchFragment extends Fragment {
 
@@ -53,6 +44,7 @@ public class SearchFragment extends Fragment {
     private EditText searchView;
     private Button searchButton;
     private List<Map<String, String>> searchResults;
+    private static final String SPOTIFY_ACCESS_TOKEN = "c74eb4e3ea7643139f25728420711475";
 
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
@@ -86,7 +78,7 @@ public class SearchFragment extends Fragment {
         rvSongs.setAdapter(adapter);
 
         linearLayout = view.findViewById(R.id.content_wrapper);
-
+        linearLayout.setVisibility(View.GONE);
 
         searchResults = new ArrayList<>();
         adapter = new SongAdapter(searchResults, result -> {
@@ -96,26 +88,7 @@ public class SearchFragment extends Fragment {
         rvSongs.setAdapter(adapter);
         rvSongs.setLayoutManager(new LinearLayoutManager(getContext()));
 
-
         searchButton.setOnClickListener(v -> performSearch());
-
-        ImageView imageView1 = view.findViewById(R.id.Pop);
-        ImageView imageView2 = view.findViewById(R.id.Christian);
-        ImageView imageView3 = view.findViewById(R.id.Indie);
-        ImageView imageView4 = view.findViewById(R.id.Rock);
-
-        imageView1.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {navigateToFragment(new PopSongsPageFragment());}
-        });
-        imageView2.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {navigateToFragment(new ChristianSongsPageFragment());}
-        });
-        imageView3.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {navigateToFragment(new IndieSongsPageFragment());}
-        });
-        imageView4.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {navigateToFragment(new RockSongsPageFragment());}
-        });
     }
 
     private void performSearch() {
@@ -129,8 +102,7 @@ public class SearchFragment extends Fragment {
         try {
             // Encode the query to handle spaces and special characters
             String encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8.toString());
-            url = "api spotify search"
-                    + encodedQuery;
+            url = "https://api.spotify.com/v1/search?q=" + encodedQuery + "&type=track&limit=10";
         } catch (IOException e) {
             e.printStackTrace();
             Toast.makeText(getContext(), "Encoding error", Toast.LENGTH_SHORT).show();
@@ -138,7 +110,10 @@ public class SearchFragment extends Fragment {
         }
 
         OkHttpClient client = new OkHttpClient();
-        Request request = new Request.Builder().url(url).build();
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("Authorization", "Bearer " + SPOTIFY_ACCESS_TOKEN)
+                .build();
 
         client.newCall(request).enqueue(new Callback() {
             @Override
@@ -147,32 +122,24 @@ public class SearchFragment extends Fragment {
                         Toast.makeText(getContext(), "Search failed", Toast.LENGTH_SHORT).show());
             }
 
-            @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
 
                 String responseData = response.body().string();
                 Gson gson = new Gson();
                 JsonObject jsonObject = gson.fromJson(responseData, JsonObject.class);
-                JsonObject queryObject = jsonObject.getAsJsonObject("query");
-                JsonArray searchResultsArray = queryObject.getAsJsonArray("search");
+                JsonArray tracksArray = jsonObject.getAsJsonObject("tracks").getAsJsonArray("items");
 
                 List<Map<String, String>> results = new ArrayList<>();
-                for (int i = 0; i < searchResultsArray.size(); i++) {
-                    JsonObject item = searchResultsArray.get(i).getAsJsonObject();
+                for (int i = 0; i < tracksArray.size(); i++) {
+                    JsonObject item = tracksArray.get(i).getAsJsonObject();
                     Map<String, String> result = new HashMap<>();
-                    result.put("song", item.get("song").getAsString());
-                    result.put("artist", item.get("artist").getAsString());
+                    result.put("title", item.get("name").getAsString());
+                    result.put("artist", item.getAsJsonArray("artists").get(0).getAsJsonObject().get("name").getAsString());
 
-                    // Construct the full URL for the article
-                    String articleTitle = item.get("song").getAsString();
-                    String encodedTitle = URLEncoder.encode(articleTitle, StandardCharsets.UTF_8.toString());
-
-                    // Replace '+' with '_'
-                    String articleUrl = "api spotify search"
-                            + encodedTitle.replace("+", "_");
-
-                    result.put("url", articleUrl);
+                    // Construct the Spotify track URL
+                    String trackUrl = item.get("external_urls").getAsJsonObject().get("spotify").getAsString();
+                    result.put("url", trackUrl);
                     results.add(result);
                 }
 
