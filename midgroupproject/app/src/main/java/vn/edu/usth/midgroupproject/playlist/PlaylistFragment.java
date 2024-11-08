@@ -24,7 +24,6 @@ public class PlaylistFragment extends Fragment implements RecyclerViewInterface 
 
     ArrayList<SongModel> songModels = new ArrayList<>();
     Song_RecyclerViewAdapter adapter;
-
     // Song images array
     int[] songImages = {R.drawable.song1, R.drawable.song3, R.drawable.song2};
 

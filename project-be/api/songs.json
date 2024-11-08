@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "name": "As It Was",
+    "artist": "Harry Styles",
+    "image": "/images/car.jpg",
+    "mp3Url": "/songs/as_it_was__harry_styles.mp3"  
+  },
+  {
+    "id": 2,
+    "name": "Dangerously",
+    "artist": "Charle Puth",
+    "image": "/images/car.jpg",
+    "mp3Url": "/songs/dangerously_charlie_puth.mp3" 
+  }
+]
