@@ -72,13 +72,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/spotify_mix"
-                        android:text=". . ."
-                        android:textColor="#B3B3B3" />
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/spotify_mix"
-                        android:text=" songs"
+                        android:text=". . . songs"
                         android:textColor="#B3B3B3" />
                 </LinearLayout>
 

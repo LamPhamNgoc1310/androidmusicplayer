@@ -3,73 +3,60 @@ package vn.edu.usth.midgroupproject.ui.song_player;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.bumptech.glide.Glide;
-
 import java.io.IOException;
-
+import java.util.ArrayList;
 import vn.edu.usth.midgroupproject.R;
+import vn.edu.usth.midgroupproject.models.SongModel;
 
 public class SongActivity extends AppCompatActivity {
 
-    private boolean isLiked = false;
-    private boolean isPlaying = false;
+    private ArrayList<SongModel> songList;
+    private int currentPosition;
     private MediaPlayer mediaPlayer;
+    private ImageView playButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_song);
 
-        String title = getIntent().getStringExtra("TITLE");
-        String artist = getIntent().getStringExtra("ARTIST");
-        String image = getIntent().getStringExtra("IMAGE");
-        String mp3Url = getIntent().getStringExtra("MP3_URL");
+        songList = getIntent().getParcelableArrayListExtra("SONG_LIST");
+        currentPosition = getIntent().getIntExtra("CURRENT_POSITION", 0);
+
+        playButton = findViewById(R.id.play_button);
+        setupUI();
+
+        findViewById(R.id.previous_button).setOnClickListener(v -> playPreviousSong());
+        findViewById(R.id.next_button).setOnClickListener(v -> playNextSong());
+
+        playButton.setOnClickListener(v -> togglePlayPause());
+    }
+
+    private void setupUI() {
+        if (mediaPlayer != null) {
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
+
+        SongModel currentSong = songList.get(currentPosition);
 
         TextView tvTitle = findViewById(R.id.song_title_fragment);
         TextView tvArtist = findViewById(R.id.song_artist_fragment);
         ImageView imageView = findViewById(R.id.song_image_fragment);
 
-        tvTitle.setText(title);
-        tvArtist.setText(artist);
+        tvTitle.setText(currentSong.getSongTitle());
+        tvArtist.setText(currentSong.getSongArtist());
 
-        // Load image using Glide
         Glide.with(this)
-                .load("https://androidmusicplayer-be.vercel.app" + image)  // Add base URL here
+                .load("https://androidmusicplayer-be.vercel.app" + currentSong.getSongImage())
                 .into(imageView);
 
-        // Setup Like button
-        ImageView likeButton = findViewById(R.id.like_button);
-        likeButton.setOnClickListener(v -> {
-            if (isLiked) {
-                likeButton.setImageResource(R.drawable.like_off);
-            } else {
-                likeButton.setImageResource(R.drawable.like_on);
-            }
-            isLiked = !isLiked;
-        });
-
-        // Initialize MediaPlayer for the mp3Url
-        ImageView playButton = findViewById(R.id.play_button);
-        setupMediaPlayer("https://androidmusicplayer-be.vercel.app" + mp3Url); // Add base URL here
-
-        // Play/Pause button behavior
-        playButton.setOnClickListener(v -> {
-            if (isPlaying) {
-                mediaPlayer.pause();
-                playButton.setImageResource(R.drawable.playbutton);
-            } else {
-                mediaPlayer.start();
-                playButton.setImageResource(R.drawable.pausebutton);
-            }
-            isPlaying = !isPlaying;
-        });
+        setupMediaPlayer("https://androidmusicplayer-be.vercel.app" + currentSong.getMp3Url());
     }
 
     private void setupMediaPlayer(String mp3Url) {
@@ -81,20 +68,43 @@ public class SongActivity extends AppCompatActivity {
 
         try {
             mediaPlayer.setDataSource(mp3Url);
-            mediaPlayer.prepareAsync();  // Use prepareAsync to load the data in the background
-            mediaPlayer.setOnPreparedListener(mp -> {
-                // MediaPlayer is ready, we can start playing if needed
-                Toast.makeText(SongActivity.this, "Ready to play", Toast.LENGTH_SHORT).show();
-            });
+            mediaPlayer.prepareAsync();
+            mediaPlayer.setOnPreparedListener(mp -> mediaPlayer.start());
             mediaPlayer.setOnCompletionListener(mp -> {
-                // Reset the play button icon when the song ends
-                ImageView playButton = findViewById(R.id.play_button);
                 playButton.setImageResource(R.drawable.playbutton);
-                isPlaying = false;
+                mediaPlayer.seekTo(0);
             });
         } catch (IOException e) {
             Toast.makeText(this, "Error loading song", Toast.LENGTH_SHORT).show();
             e.printStackTrace();
+        }
+    }
+
+    private void togglePlayPause() {
+        if (mediaPlayer.isPlaying()) {
+            mediaPlayer.pause();
+            playButton.setImageResource(R.drawable.playbutton);
+        } else {
+            mediaPlayer.start();
+            playButton.setImageResource(R.drawable.pausebutton);
+        }
+    }
+
+    private void playNextSong() {
+        if (currentPosition < songList.size() - 1) {
+            currentPosition++;
+            setupUI();
+        } else {
+            Toast.makeText(this, "End of playlist", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void playPreviousSong() {
+        if (currentPosition > 0) {
+            currentPosition--;
+            setupUI();
+        } else {
+            Toast.makeText(this, "Start of playlist", Toast.LENGTH_SHORT).show();
         }
     }
 

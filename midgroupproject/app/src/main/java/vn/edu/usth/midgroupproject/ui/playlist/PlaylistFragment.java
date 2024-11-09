@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 import java.io.IOException;
@@ -38,6 +39,9 @@ public class PlaylistFragment extends Fragment implements RecyclerViewInterface 
     Song_RecyclerViewAdapter adapter;
     SongApiService songApiService;
     ProgressBar progressBar;
+    private TextView playlistSongNumber;
+
+
 
     // Song images array
 //    int[] songImages = {R.drawable.song1, R.drawable.song3, R.drawable.song2};
@@ -47,7 +51,11 @@ public class PlaylistFragment extends Fragment implements RecyclerViewInterface 
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_playlist, container, false);
 
+        playlistSongNumber = view.findViewById(R.id.playlist_song_number);
+
         progressBar = view.findViewById(R.id.progressBar);
+
+
         RecyclerView recyclerView = view.findViewById(R.id.mRecycleView);
         adapter = new Song_RecyclerViewAdapter(requireContext(), songModels, this);
         recyclerView.setAdapter(adapter);
@@ -70,28 +78,11 @@ public class PlaylistFragment extends Fragment implements RecyclerViewInterface 
     }
 
 
-//    private void fetchSongsFromApi() {
-//        Call<List<SongModel>> call = songApiService.getSongs();
-//        call.enqueue(new Callback<List<SongModel>>() {
-//            @Override
-//            public void onResponse(Call<List<SongModel>> call, Response<List<SongModel>> response) {
-//                if (response.isSuccessful() && response.body() != null) {
-//                    // Log the response to check its contents
-//                    Log.d("API Response", "Songs fetched: " + response.body());
-//
-//                    songModels.addAll(response.body());
-//                    adapter.notifyDataSetChanged();
-//                } else {
-//                    Toast.makeText(requireContext(), "Failed to load songs", Toast.LENGTH_SHORT).show();
-//                }
-//            }
-//
-//            @Override
-//            public void onFailure(Call<List<SongModel>> call, Throwable t) {
-//                Toast.makeText(requireContext(), "Error: " + t.getMessage(), Toast.LENGTH_LONG).show();
-//            }
-//        });
-//    }
+
+    private void fetchSongsFromApi() {
+        // Use AsyncTask to fetch data in the background
+        new FetchSongsTask().execute();
+    }
 
     private class FetchSongsTask extends AsyncTask<Void, Void, List<SongModel>> {
         @Override
@@ -103,6 +94,8 @@ public class PlaylistFragment extends Fragment implements RecyclerViewInterface 
         @Override
         protected List<SongModel> doInBackground(Void... voids) {
             try {
+
+                // Make the API call in the background (synchronously)
                 Call<List<SongModel>> call = songApiService.getSongs();
                 Response<List<SongModel>> response = call.execute(); // Synchronous call
 
@@ -112,8 +105,9 @@ public class PlaylistFragment extends Fragment implements RecyclerViewInterface 
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return null;
+            return null; // Return null if fetching failed
         }
+
 
         @Override
         protected void onPostExecute(List<SongModel> fetchedSongs) {
@@ -122,14 +116,14 @@ public class PlaylistFragment extends Fragment implements RecyclerViewInterface 
             if (fetchedSongs != null) {
                 songModels.addAll(fetchedSongs);
                 adapter.notifyDataSetChanged();
+
+                // Update the song count TextView
+                updateSongCount();
             } else {
                 Toast.makeText(requireContext(), "Failed to load songs", Toast.LENGTH_SHORT).show();
             }
         }
     }
-
-
-
 
     // Method to add a new song
 //    public void addSong(String title, String artist, String imageUrl , String mp3Url) {
@@ -143,14 +137,17 @@ public class PlaylistFragment extends Fragment implements RecyclerViewInterface 
 //        adapter.notifyItemInserted(songModels.size() - 1);
 //    }
 
+    private void updateSongCount() {
+        // Update the TextView to show the number of items in songModels
+        String songCountText = songModels.size() + " songs";
+        playlistSongNumber.setText(songCountText);
+    }
+
     @Override
     public void onItemClick(int position) {
         Intent intent = new Intent(requireContext(), SongActivity.class);
-        SongModel song = songModels.get(position);
-        intent.putExtra("TITLE", song.getSongTitle());
-        intent.putExtra("ARTIST", song.getSongArtist());
-        intent.putExtra("IMAGE", song.getSongImage());
-        intent.putExtra("MP3_URL", song.getMp3Url());
+        intent.putParcelableArrayListExtra("SONG_LIST", songModels);
+        intent.putExtra("CURRENT_POSITION", position);
         startActivity(intent);
     }
 }

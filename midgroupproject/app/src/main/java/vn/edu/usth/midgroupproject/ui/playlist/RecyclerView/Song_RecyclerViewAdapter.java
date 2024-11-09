@@ -44,7 +44,7 @@ public class Song_RecyclerViewAdapter extends RecyclerView.Adapter<Song_Recycler
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
         SongModel song = songModels.get(position);
 
-        // Log to check the song details
+        // Log to check the song details for debugging
         Log.d("Song Info", "Title: " + song.getSongTitle() + ", Artist: " + song.getSongArtist() + ", Image URL: " + song.getSongImage());
 
         holder.tvTitle.setText(song.getSongTitle());

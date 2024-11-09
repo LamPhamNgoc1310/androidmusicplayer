@@ -153,6 +153,7 @@
             tools:context=".MusicButtonFragment">
 
             <ImageView
+                android:id="@+id/previous_button"
                 android:layout_width="30dp"
                 android:layout_height="30dp"
                 android:src="@drawable/previoussong"
@@ -167,6 +168,7 @@
                 android:layout_centerHorizontal="true"/>
 
             <ImageView
+                android:id="@+id/next_button"
                 android:layout_width="30dp"
                 android:layout_height="30dp"
                 android:layout_alignParentEnd="true"
